@@ -1,0 +1,45 @@
+# Byte-compiled / optimized
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.venv
+venv
+
+# Git / IDE
+.git
+.gitignore
+.idea
+.vscode
+
+# Tests / coverage / caches
+tests
+.pytest_cache
+.coverage
+.coverage.*
+htmlcov
+.ruff_cache
+.mypy_cache
+
+# Env / docs / local
+.env
+.env.*
+!.env.example
+*.md
+!README.md
+docs
+*.log
+tmp
+temp
+
+# Poetry / build
+dist
+build
+*.egg-info
+
+# Local DB
+*.db
+*.sqlite
+pgdata
