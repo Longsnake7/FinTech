@@ -28,6 +28,27 @@ class Settings(BaseSettings):
     postgres_db: str = Field(default="payments", alias="POSTGRES_DB")
     database_url: str | None = Field(default=None, alias="DATABASE_URL")
 
+    rabbitmq_host: str = Field(default="localhost", alias="RABBITMQ_HOST")
+    rabbitmq_port: int = Field(default=5672, alias="RABBITMQ_PORT")
+    rabbitmq_user: str = Field(default="guest", alias="RABBITMQ_USER")
+    rabbitmq_password: str = Field(default="guest", alias="RABBITMQ_PASSWORD")
+    rabbitmq_vhost: str = Field(default="/", alias="RABBITMQ_VHOST")
+    rabbitmq_url: str | None = Field(default=None, alias="RABBITMQ_URL")
+
+    rabbitmq_exchange: str = Field(default="payments", alias="RABBITMQ_EXCHANGE")
+    rabbitmq_queue_payments_new: str = Field(
+        default="payments.new",
+        alias="RABBITMQ_QUEUE_PAYMENTS_NEW",
+    )
+    rabbitmq_queue_retry: str = Field(default="payments.retry", alias="RABBITMQ_QUEUE_RETRY")
+    rabbitmq_queue_dlq: str = Field(default="payments.dlq", alias="RABBITMQ_QUEUE_DLQ")
+    rabbitmq_routing_payments_new: str = Field(
+        default="payments.new",
+        alias="RABBITMQ_ROUTING_PAYMENTS_NEW",
+    )
+    rabbitmq_routing_retry: str = Field(default="payments.retry", alias="RABBITMQ_ROUTING_RETRY")
+    rabbitmq_routing_dlq: str = Field(default="payments.dlq", alias="RABBITMQ_ROUTING_DLQ")
+
     outbox_poll_interval_seconds: float = Field(default=1.0, alias="OUTBOX_POLL_INTERVAL_SECONDS")
     outbox_batch_size: int = Field(default=50, alias="OUTBOX_BATCH_SIZE")
     outbox_max_attempts: int = Field(default=5, alias="OUTBOX_MAX_ATTEMPTS")
@@ -38,6 +59,8 @@ class Settings(BaseSettings):
     gateway_success_rate: float = Field(default=0.9, alias="GATEWAY_SUCCESS_RATE")
     gateway_min_delay_seconds: float = Field(default=2.0, alias="GATEWAY_MIN_DELAY_SECONDS")
     gateway_max_delay_seconds: float = Field(default=5.0, alias="GATEWAY_MAX_DELAY_SECONDS")
+    webhook_timeout_seconds: float = Field(default=10.0, alias="WEBHOOK_TIMEOUT_SECONDS")
+    outbox_worker_enabled: bool = Field(default=True, alias="OUTBOX_WORKER_ENABLED")
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -48,6 +71,18 @@ class Settings(BaseSettings):
         return (
             f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def rabbitmq_amqp_url(self) -> str:
+        """Return AMQP URL for RabbitMQ."""
+        if self.rabbitmq_url:
+            return self.rabbitmq_url
+        vhost = self.rabbitmq_vhost if self.rabbitmq_vhost != "/" else ""
+        return (
+            f"amqp://{self.rabbitmq_user}:{self.rabbitmq_password}"
+            f"@{self.rabbitmq_host}:{self.rabbitmq_port}/{vhost}"
         )
 
 

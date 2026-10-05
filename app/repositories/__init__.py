@@ -67,6 +67,45 @@ class OutboxRepository:
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
 
+    async def mark_processing(self, message: OutboxMessage, *, lock_token: str) -> OutboxMessage:
+        """Mark outbox row as processing with a lock token."""
+        message.status = OutboxStatus.PROCESSING
+        message.locked_at = datetime.now(UTC)
+        message.lock_token = lock_token
+        message.attempts += 1
+        await self._session.flush()
+        return message
+
+    async def mark_published(self, message: OutboxMessage) -> OutboxMessage:
+        """Mark outbox row as successfully published."""
+        message.status = OutboxStatus.PUBLISHED
+        message.published_at = datetime.now(UTC)
+        message.last_error = None
+        message.lock_token = None
+        message.locked_at = None
+        await self._session.flush()
+        return message
+
+    async def mark_retry(
+        self,
+        message: OutboxMessage,
+        *,
+        error: str,
+        available_at: datetime,
+        failed: bool = False,
+    ) -> OutboxMessage:
+        """Schedule outbox row for retry or mark as permanently failed."""
+        message.last_error = error
+        message.lock_token = None
+        message.locked_at = None
+        if failed:
+            message.status = OutboxStatus.FAILED
+        else:
+            message.status = OutboxStatus.PENDING
+            message.available_at = available_at
+        await self._session.flush()
+        return message
+
 
 class ProcessedMessageRepository:
     """Data access for consumer idempotency records."""
@@ -86,3 +125,31 @@ class ProcessedMessageRepository:
         self._session.add(record)
         await self._session.flush()
         return record
+
+    async def try_acquire(self, *, message_id: str, event_type: str) -> bool:
+        """
+        Atomically claim a message for processing.
+
+        Returns True if this caller acquired the claim, False if already processed.
+        """
+        from uuid import uuid4
+
+        from sqlalchemy.dialects.postgresql import insert
+
+        stmt = (
+            insert(ProcessedMessage)
+            .values(id=uuid4(), message_id=message_id, event_type=event_type)
+            .on_conflict_do_nothing(index_elements=["message_id"])
+            .returning(ProcessedMessage.id)
+        )
+        result = await self._session.execute(stmt)
+        return result.scalar_one_or_none() is not None
+
+    async def delete(self, message_id: str) -> None:
+        """Remove an idempotency record (used when releasing a failed claim)."""
+        from sqlalchemy import delete
+
+        await self._session.execute(
+            delete(ProcessedMessage).where(ProcessedMessage.message_id == message_id)
+        )
+        await self._session.flush()

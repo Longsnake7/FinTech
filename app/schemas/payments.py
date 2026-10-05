@@ -1,4 +1,4 @@
-"""Pydantic schemas for payment API and internal transfers."""
+"""Pydantic schemas for payment API and broker messages."""
 
 from datetime import datetime
 from decimal import Decimal
@@ -43,7 +43,7 @@ class PaymentAcceptedResponse(BaseModel):
 class PaymentResponse(BaseModel):
     """Full payment representation."""
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: UUID
     amount: Decimal
@@ -61,3 +61,29 @@ class ErrorResponse(BaseModel):
     """Standard API error payload."""
 
     detail: str
+
+
+class PaymentCreatedEvent(BaseModel):
+    """Broker payload for payments.new events."""
+
+    event_id: UUID
+    event_type: str = "payments.new"
+    payment_id: UUID
+    attempt: int = Field(default=1, ge=1)
+    amount: Decimal
+    currency: Currency
+    description: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    webhook_url: str
+    idempotency_key: str
+    created_at: datetime
+
+
+class DlqMessage(BaseModel):
+    """Dead-letter payload with failure context."""
+
+    original_event: dict[str, Any]
+    error: str
+    attempts: int
+    failed_at: datetime
+    reason: str

@@ -1,7 +1,14 @@
 """Domain package."""
 
 from app.domain.enums import Currency, OutboxEventType, OutboxStatus, PaymentStatus
-from app.domain.exceptions import DomainError, IdempotencyConflictError, PaymentNotFoundError
+from app.domain.exceptions import (
+    DomainError,
+    IdempotencyConflictError,
+    PaymentGatewayError,
+    PaymentNotFoundError,
+    UnknownEventMappingError,
+    WebhookDeliveryError,
+)
 
 __all__ = [
     "Currency",
@@ -9,6 +16,9 @@ __all__ = [
     "IdempotencyConflictError",
     "OutboxEventType",
     "OutboxStatus",
+    "PaymentGatewayError",
     "PaymentNotFoundError",
     "PaymentStatus",
+    "UnknownEventMappingError",
+    "WebhookDeliveryError",
 ]

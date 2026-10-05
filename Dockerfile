@@ -9,11 +9,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
+    && apt-get install -y --no-install-recommends curl procps \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir "poetry==${POETRY_VERSION}"
 
-COPY pyproject.toml README.md ./
+COPY pyproject.toml poetry.lock README.md ./
 COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./

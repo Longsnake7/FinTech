@@ -14,6 +14,7 @@ dependencies = [
     "asyncpg>=0.30.0,<1.0.0",
     "alembic>=1.14.0,<2.0.0",
     "httpx>=0.28.0,<1.0.0",
+    "faststream[cli,rabbit] (>=0.5.0,<0.6.0)",
 ]
 
 [project.optional-dependencies]
@@ -59,6 +60,9 @@ ignore = [
     "S101",   # assert is fine in tests
     "S105",   # hardcoded password false positives for settings defaults
     "S106",
+    "TC001",  # prefer runtime-friendly imports with future annotations
+    "TC002",
+    "TC003",
 ]
 
 [tool.ruff.lint.per-file-ignores]
