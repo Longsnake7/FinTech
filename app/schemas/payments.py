@@ -13,6 +13,18 @@ from app.domain.enums import Currency, PaymentStatus
 class PaymentCreateRequest(BaseModel):
     """Request body for creating a payment."""
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "amount": "100.00",
+                "currency": "USD",
+                "description": "Order #12345",
+                "metadata": {"order_id": "12345"},
+                "webhook_url": "https://merchant.example.com/webhooks/payments",
+            }
+        }
+    )
+
     amount: Decimal = Field(..., gt=0, decimal_places=2, examples=["100.00"])
     currency: Currency
     description: str = Field(default="", max_length=1024)
@@ -33,7 +45,16 @@ class PaymentCreateRequest(BaseModel):
 class PaymentAcceptedResponse(BaseModel):
     """Response returned after accepting a payment for processing."""
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "payment_id": "550e8400-e29b-41d4-a716-446655440000",
+                "status": "pending",
+                "created_at": "2026-10-05T12:00:00Z",
+            }
+        },
+    )
 
     payment_id: UUID
     status: PaymentStatus

@@ -57,9 +57,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="Payment Service",
-        description="Asynchronous payment processing microservice",
-        version="0.2.0",
+        description=(
+            "Asynchronous payment processing microservice. "
+            "Accepts payments via REST API, stores them in PostgreSQL, "
+            "publishes events through a transactional outbox to RabbitMQ, "
+            "and processes them with a dedicated consumer (gateway emulation + webhook)."
+        ),
+        version="1.0.0",
         lifespan=lifespan,
+        openapi_tags=[
+            {
+                "name": "payments",
+                "description": "Create and query payments (requires `X-API-Key`).",
+            },
+            {
+                "name": "health",
+                "description": "Liveness and readiness probes for orchestration.",
+            },
+        ],
     )
 
     def _get_engine() -> AsyncEngine:
